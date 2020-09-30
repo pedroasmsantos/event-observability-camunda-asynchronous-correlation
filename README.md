@@ -1,0 +1,2 @@
+# event-observability-camunda-asynchronous-correlation
+This repository showcases a project developed under the scope of a master thesis on Software Engineering. It intends to present a solution for attaining visibility and control over the business processes that span across multiple microservices on an event-driven microservices ecosystem. It does it by using the workflow engine Camunda and implementing a mechanism for asynchronous correlation of events.
