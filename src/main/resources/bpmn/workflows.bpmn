@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1sowivw" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.4.1">
+  <bpmn:process id="Process_1rq1a1w" isExecutable="true">
+    <bpmn:startEvent id="OrderStartedIntegrationEvent" name="Order Started">
+      <bpmn:outgoing>SequenceFlow_1p6n0v1</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1h6kano" messageRef="Message_1bdtbzb" />
+    </bpmn:startEvent>
+    <bpmn:receiveTask id="OrderStatusChangedToAwaitingValidationIntegrationEvent" name="Order Status Changed to Awaiting Validation" messageRef="Message_03bod01">
+      <bpmn:incoming>SequenceFlow_1p6n0v1</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0sajmzd</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0sajmzd" sourceRef="OrderStatusChangedToAwaitingValidationIntegrationEvent" targetRef="OrderStockConfirmedIntegrationEvent" />
+    <bpmn:receiveTask id="OrderStockConfirmedIntegrationEvent" name="Stock Confirmed" messageRef="Message_01kbb1z">
+      <bpmn:incoming>SequenceFlow_0sajmzd</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_18xjohb</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="SequenceFlow_18xjohb" sourceRef="OrderStockConfirmedIntegrationEvent" targetRef="OrderStatusChangedToStockConfirmedIntegrationEvent" />
+    <bpmn:receiveTask id="OrderStatusChangedToStockConfirmedIntegrationEvent" name="Order Status Changed to Stock Confirmed" messageRef="Message_022ad5s">
+      <bpmn:incoming>SequenceFlow_18xjohb</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0qt2hp5</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0qt2hp5" sourceRef="OrderStatusChangedToStockConfirmedIntegrationEvent" targetRef="OrderPaymentSucceededIntegrationEvent" />
+    <bpmn:endEvent id="EndEvent_1ncbiyb">
+      <bpmn:incoming>SequenceFlow_113fkei</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0hknths</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_02a8pak</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_05sk6oa</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1nconbt</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="NOT_CORRELATED_MSGS" name="Not Correlated Messages">
+      <bpmn:outgoing>SequenceFlow_0zr9dq3</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_0gyw69o" />
+    </bpmn:startEvent>
+    <bpmn:userTask id="UserTask_1kofjse" name="Verify Message" camunda:assignee="admin">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="approved" label="Approved?" type="boolean" defaultValue="false" />
+          <camunda:formField id="orderId" label="Order ID" type="string" defaultValue="${orderId}" />
+          <camunda:formField id="orderStatus" label="Order Status" type="string" defaultValue="${orderStatus}" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0zr9dq3</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0nbkpph</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_1x80ghc">
+      <bpmn:incoming>SequenceFlow_0nbkpph</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0zr9dq3" sourceRef="NOT_CORRELATED_MSGS" targetRef="UserTask_1kofjse" />
+    <bpmn:sequenceFlow id="SequenceFlow_05nzuao" sourceRef="OrderPaymentSucceededIntegrationEvent" targetRef="OrderStatusChangedToPaidIntegrationEvent" />
+    <bpmn:receiveTask id="OrderPaymentSucceededIntegrationEvent" name="Payment Succeeded" messageRef="Message_047a9om">
+      <bpmn:incoming>SequenceFlow_0qt2hp5</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_05nzuao</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:receiveTask id="OrderStatusChangedToPaidIntegrationEvent" name="Order Status Changed to Paid" messageRef="Message_0zz02vw">
+      <bpmn:incoming>SequenceFlow_05nzuao</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1fxcnbp</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:boundaryEvent id="OrderPaymentFailedIntegrationEvent" name="Payment Failed" attachedToRef="OrderPaymentSucceededIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_113fkei</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_0znqpbp" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="OrderStatusChangedToCancelledIntegrationEvent" name="Order Cancelled" attachedToRef="OrderStatusChangedToAwaitingValidationIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_02a8pak</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_17swvsu" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="OrderStockRejectedIntegrationEvent" name="Stock Rejected" attachedToRef="OrderStockConfirmedIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_0hknths</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_041t7rn" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1fxcnbp" sourceRef="OrderStatusChangedToPaidIntegrationEvent" targetRef="Task_17b8t5e" />
+    <bpmn:sequenceFlow id="SequenceFlow_113fkei" sourceRef="OrderPaymentFailedIntegrationEvent" targetRef="EndEvent_1ncbiyb" />
+    <bpmn:sequenceFlow id="SequenceFlow_0hknths" sourceRef="OrderStockRejectedIntegrationEvent" targetRef="EndEvent_1ncbiyb" />
+    <bpmn:sequenceFlow id="SequenceFlow_02a8pak" sourceRef="OrderStatusChangedToCancelledIntegrationEvent" targetRef="EndEvent_1ncbiyb" />
+    <bpmn:boundaryEvent id="IntermediateThrowEvent_1afzsqj" name="5 Minutes" attachedToRef="OrderStatusChangedToAwaitingValidationIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_1aau8pj</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:userTask id="Task_0xkhaop" name="Validate Failed Orders" camunda:assignee="admin">
+      <bpmn:extensionElements>
+        <camunda:taskListener delegateExpression="${userValidationListener}" event="assignment" />
+        <camunda:formData>
+          <camunda:formField id="orderId" label="Order ID" type="string" defaultValue="${orderId}" />
+          <camunda:formField id="orderStatus" label="Order Status" type="string" defaultValue="orderStatus" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1aau8pj</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0jwzsjv</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_06ipm8g</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_06sirnu</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1rk6g6t</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_05sk6oa</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_05sk6oa" sourceRef="Task_0xkhaop" targetRef="EndEvent_1ncbiyb" />
+    <bpmn:sequenceFlow id="SequenceFlow_1aau8pj" sourceRef="IntermediateThrowEvent_1afzsqj" targetRef="Task_0xkhaop" />
+    <bpmn:boundaryEvent id="IntermediateThrowEvent_18fchsl" name="5 Minutes&#10;" attachedToRef="OrderStockConfirmedIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_0jwzsjv</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0jwzsjv" sourceRef="IntermediateThrowEvent_18fchsl" targetRef="Task_0xkhaop" />
+    <bpmn:boundaryEvent id="IntermediateThrowEvent_00dczev" name="5 Minutes" attachedToRef="OrderStatusChangedToStockConfirmedIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_06ipm8g</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="IntermediateThrowEvent_14uti0l" name="5 Minutes" attachedToRef="OrderPaymentSucceededIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_06sirnu</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="IntermediateThrowEvent_1yoz4j2" name="5 Minutes" attachedToRef="OrderStatusChangedToPaidIntegrationEvent">
+      <bpmn:outgoing>SequenceFlow_1rk6g6t</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_06ipm8g" sourceRef="IntermediateThrowEvent_00dczev" targetRef="Task_0xkhaop" />
+    <bpmn:sequenceFlow id="SequenceFlow_06sirnu" sourceRef="IntermediateThrowEvent_14uti0l" targetRef="Task_0xkhaop" />
+    <bpmn:sequenceFlow id="SequenceFlow_1rk6g6t" sourceRef="IntermediateThrowEvent_1yoz4j2" targetRef="Task_0xkhaop" />
+    <bpmn:sequenceFlow id="SequenceFlow_0nbkpph" sourceRef="UserTask_1kofjse" targetRef="EndEvent_1x80ghc" />
+    <bpmn:serviceTask id="Task_17b8t5e" name="Validate Output" camunda:delegateExpression="${outputValidationExecutor}">
+      <bpmn:incoming>SequenceFlow_1fxcnbp</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1nconbt</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1p6n0v1" sourceRef="OrderStartedIntegrationEvent" targetRef="OrderStatusChangedToAwaitingValidationIntegrationEvent" />
+    <bpmn:sequenceFlow id="SequenceFlow_1nconbt" sourceRef="Task_17b8t5e" targetRef="EndEvent_1ncbiyb" />
+  </bpmn:process>
+  <bpmn:message id="Message_1bdtbzb" name="OrderStartedIntegrationEvent" />
+  <bpmn:message id="Message_03bod01" name="OrderStatusChangedToAwaitingValidationIntegrationEvent" />
+  <bpmn:message id="Message_01kbb1z" name="OrderStockConfirmedIntegrationEvent" />
+  <bpmn:message id="Message_022ad5s" name="OrderStatusChangedToStockConfirmedIntegrationEvent" />
+  <bpmn:message id="Message_0gyw69o" name="NOT_CORRELATED_MSGS" />
+  <bpmn:message id="Message_0do3uyo" name="OrderStatusChangedToSubmittedIntegrationEvent" />
+  <bpmn:message id="Message_047a9om" name="OrderPaymentSucceededIntegrationEvent" />
+  <bpmn:message id="Message_0zz02vw" name="OrderStatusChangedToPaidIntegrationEvent" />
+  <bpmn:message id="Message_0znqpbp" name="OrderPaymentFailedIntegrationEvent" />
+  <bpmn:message id="Message_17swvsu" name="OrderStatusChangedToCancelledIntegrationEvent" />
+  <bpmn:message id="Message_041t7rn" name="OrderStockRejectedIntegrationEvent" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1rq1a1w">
+      <bpmndi:BPMNShape id="StartEvent_1qexd27_di" bpmnElement="OrderStartedIntegrationEvent">
+        <dc:Bounds x="182" y="232" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="169" y="275" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ReceiveTask_08g3dck_di" bpmnElement="OrderStatusChangedToAwaitingValidationIntegrationEvent">
+        <dc:Bounds x="290" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0sajmzd_di" bpmnElement="SequenceFlow_0sajmzd">
+        <di:waypoint x="390" y="250" />
+        <di:waypoint x="470" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ReceiveTask_1ijrxu4_di" bpmnElement="OrderStockConfirmedIntegrationEvent">
+        <dc:Bounds x="470" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_18xjohb_di" bpmnElement="SequenceFlow_18xjohb">
+        <di:waypoint x="570" y="250" />
+        <di:waypoint x="650" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ReceiveTask_0ave47r_di" bpmnElement="OrderStatusChangedToStockConfirmedIntegrationEvent">
+        <dc:Bounds x="650" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0qt2hp5_di" bpmnElement="SequenceFlow_0qt2hp5">
+        <di:waypoint x="750" y="250" />
+        <di:waypoint x="830" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1ncbiyb_di" bpmnElement="EndEvent_1ncbiyb">
+        <dc:Bounds x="1542" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_035wj68_di" bpmnElement="NOT_CORRELATED_MSGS">
+        <dc:Bounds x="182" y="502" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="164" y="545" width="72" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1kofjse_di" bpmnElement="UserTask_1kofjse">
+        <dc:Bounds x="340" y="480" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1x80ghc_di" bpmnElement="EndEvent_1x80ghc">
+        <dc:Bounds x="562" y="502" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0zr9dq3_di" bpmnElement="SequenceFlow_0zr9dq3">
+        <di:waypoint x="218" y="520" />
+        <di:waypoint x="340" y="520" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_05nzuao_di" bpmnElement="SequenceFlow_05nzuao">
+        <di:waypoint x="930" y="250" />
+        <di:waypoint x="1020" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ReceiveTask_15fsotz_di" bpmnElement="OrderPaymentSucceededIntegrationEvent">
+        <dc:Bounds x="830" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ReceiveTask_0t2prft_di" bpmnElement="OrderStatusChangedToPaidIntegrationEvent">
+        <dc:Bounds x="1020" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_15t1nuu_di" bpmnElement="OrderPaymentFailedIntegrationEvent">
+        <dc:Bounds x="862" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="842" y="315" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_0aglpu7_di" bpmnElement="OrderStatusChangedToCancelledIntegrationEvent">
+        <dc:Bounds x="322" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="300" y="315" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_1r6sl9k_di" bpmnElement="OrderStockRejectedIntegrationEvent">
+        <dc:Bounds x="502" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="482" y="315" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1fxcnbp_di" bpmnElement="SequenceFlow_1fxcnbp">
+        <di:waypoint x="1120" y="250" />
+        <di:waypoint x="1210" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_113fkei_di" bpmnElement="SequenceFlow_113fkei">
+        <di:waypoint x="880" y="308" />
+        <di:waypoint x="880" y="328" />
+        <di:waypoint x="1560" y="328" />
+        <di:waypoint x="1560" y="268" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0hknths_di" bpmnElement="SequenceFlow_0hknths">
+        <di:waypoint x="520" y="308" />
+        <di:waypoint x="520" y="350" />
+        <di:waypoint x="1560" y="350" />
+        <di:waypoint x="1560" y="268" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_02a8pak_di" bpmnElement="SequenceFlow_02a8pak">
+        <di:waypoint x="340" y="308" />
+        <di:waypoint x="340" y="370" />
+        <di:waypoint x="1560" y="370" />
+        <di:waypoint x="1560" y="268" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BoundaryEvent_16pbrs6_di" bpmnElement="IntermediateThrowEvent_1afzsqj">
+        <dc:Bounds x="372" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="406" y="173" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_0x7c85m_di" bpmnElement="Task_0xkhaop">
+        <dc:Bounds x="1370" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_05sk6oa_di" bpmnElement="SequenceFlow_05sk6oa">
+        <di:waypoint x="1470" y="120" />
+        <di:waypoint x="1560" y="120" />
+        <di:waypoint x="1560" y="232" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1aau8pj_di" bpmnElement="SequenceFlow_1aau8pj">
+        <di:waypoint x="390" y="192" />
+        <di:waypoint x="390" y="120" />
+        <di:waypoint x="1370" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BoundaryEvent_0gjdm1l_di" bpmnElement="IntermediateThrowEvent_18fchsl">
+        <dc:Bounds x="552" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="586" y="170" width="49" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0jwzsjv_di" bpmnElement="SequenceFlow_0jwzsjv">
+        <di:waypoint x="570" y="192" />
+        <di:waypoint x="570" y="120" />
+        <di:waypoint x="1370" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BoundaryEvent_191fzsa_di" bpmnElement="IntermediateThrowEvent_00dczev">
+        <dc:Bounds x="732" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="765" y="173" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_1toelo3_di" bpmnElement="IntermediateThrowEvent_14uti0l">
+        <dc:Bounds x="912" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="945.5" y="173" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_0480mub_di" bpmnElement="IntermediateThrowEvent_1yoz4j2">
+        <dc:Bounds x="1102" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1135.5" y="173" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_06ipm8g_di" bpmnElement="SequenceFlow_06ipm8g">
+        <di:waypoint x="750" y="192" />
+        <di:waypoint x="750" y="120" />
+        <di:waypoint x="1370" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_06sirnu_di" bpmnElement="SequenceFlow_06sirnu">
+        <di:waypoint x="930" y="192" />
+        <di:waypoint x="930" y="120" />
+        <di:waypoint x="1370" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1rk6g6t_di" bpmnElement="SequenceFlow_1rk6g6t">
+        <di:waypoint x="1120" y="192" />
+        <di:waypoint x="1120" y="120" />
+        <di:waypoint x="1370" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0nbkpph_di" bpmnElement="SequenceFlow_0nbkpph">
+        <di:waypoint x="440" y="520" />
+        <di:waypoint x="562" y="520" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1sykq1x_di" bpmnElement="Task_17b8t5e">
+        <dc:Bounds x="1210" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1p6n0v1_di" bpmnElement="SequenceFlow_1p6n0v1">
+        <di:waypoint x="218" y="250" />
+        <di:waypoint x="290" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1nconbt_di" bpmnElement="SequenceFlow_1nconbt">
+        <di:waypoint x="1310" y="250" />
+        <di:waypoint x="1542" y="250" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
