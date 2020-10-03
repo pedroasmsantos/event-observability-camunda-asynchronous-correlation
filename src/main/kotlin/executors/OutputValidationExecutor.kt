@@ -32,7 +32,7 @@ class OutputValidationExecutor : JavaDelegate{
         execution!!.setVariable("orderIsValid", isOrderValid)
     }
 
-    fun getAuthenticationToken(client: HttpClient, orderId: String) : String{
+    private fun getAuthenticationToken(client: HttpClient, orderId: String) : String{
         val parameters: MutableMap<Any, Any> = HashMap()
         parameters["client_id"] = CLIENT_ID
         parameters["client_secret"] = CLIENT_SECRET
@@ -55,7 +55,7 @@ class OutputValidationExecutor : JavaDelegate{
         return jsonObject.get("access_token").asString
     }
 
-    fun buildFormUrlEncoded(data: Map<Any, Any>): BodyPublisher? {
+    private fun buildFormUrlEncoded(data: Map<Any, Any>): BodyPublisher? {
         val builder = StringBuilder()
         for ((key, value) in data) {
             if (builder.length > 0) {
@@ -72,7 +72,7 @@ class OutputValidationExecutor : JavaDelegate{
         return BodyPublishers.ofString(builder.toString())
     }
 
-    fun validateOrder(client: HttpClient, orderId: String, accessToken: String) : Boolean{
+    private fun validateOrder(client: HttpClient, orderId: String, accessToken: String) : Boolean{
         val request = HttpRequest.newBuilder()
                 .uri(URI.create(ORDERING_API_ENDPOINT + orderId))
                 .setHeader("Authorization", "Bearer $accessToken")
