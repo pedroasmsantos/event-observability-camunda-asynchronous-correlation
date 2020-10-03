@@ -3,6 +3,7 @@ package event.observability.camunda.services
 import com.google.gson.Gson
 import event.observability.camunda.entities.CorrelationEvent
 import event.observability.camunda.events.OrderEvent
+import event.observability.camunda.events.OrderStockItem
 import event.observability.camunda.repositories.UncorrelatedMessagesRepository
 import org.camunda.bpm.engine.RuntimeService
 import org.camunda.bpm.engine.runtime.MessageCorrelationResult
@@ -29,7 +30,7 @@ class CorrelationService(val runtimeService: RuntimeService,
                     if(uncorrelatedMessage != null){
                         LOGGER.info("Uncorrelated Message found... Will attempt to apply correlation...")
                         applyCorrelation(uncorrelatedMessage.getMessageName(), uncorrelatedMessage.getCorrelationId(),
-                                uncorrelatedMessage.getCorrelationId(), uncorrelatedMessage.getPayload())
+                                uncorrelatedMessage.getCorrelationId(), uncorrelatedMessage.getPayload(), arrayOf<OrderStockItem>())
                     }
                 },
                 Instant.now().plusSeconds(2))
@@ -45,7 +46,7 @@ class CorrelationService(val runtimeService: RuntimeService,
                          event: OrderEvent) {
         LOGGER.info("CorrelationService#consumeMessage: Attempt to correlate message correlationId $correlationId - messageName $messageName. ")
 
-        val result = applyCorrelation(messageName, correlationId, event.OrderId, event.OrderStatus)
+        val result = applyCorrelation(messageName, correlationId, event.id, event.status, event.products)
 
         if (result != null && result.any()){
             LOGGER.info("Event $event correlated successfully.")
@@ -72,12 +73,18 @@ class CorrelationService(val runtimeService: RuntimeService,
         repository.deleteUncorrelatedMessage(messageId)
     }
 
+    fun findAllUncorrelatedMessages(): List<CorrelationEvent>{
+        LOGGER.info("Getting all uncorrelated messages")
+        return repository.findAllUncorrelatedMessages()
+    }
+
     private fun applyCorrelation(messageName: String?, correlationId: String?,
-                                 orderId: String?, orderStatus: String?) : List<MessageCorrelationResult> {
+                                 orderId: String?, orderStatus: String?, orderItems: Array<OrderStockItem>?) : List<MessageCorrelationResult> {
         return runtimeService.createMessageCorrelation(messageName)
                 .processInstanceBusinessKey(correlationId)
                 .setVariable("orderId", orderId)
                 .setVariable("orderStatus", orderStatus)
+                .setVariable("orderItems", orderItems)
                 .correlateAllWithResult()
     }
 }

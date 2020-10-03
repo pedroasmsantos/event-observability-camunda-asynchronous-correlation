@@ -45,6 +45,10 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
         jdbcTemplate.update(getDeleteUncorrelatedMessagesByIdStatement(), messageId)
     }
 
+    fun findAllUncorrelatedMessages() : List<CorrelationEvent>{
+        return jdbcTemplate.query(getFindAllUncorrelatedMessagesQuery(), extractData())
+    }
+
     private fun getValidateUncorrelatedMessagesQuery(): String {
         return "SELECT 1 FROM $tableName"
     }
@@ -79,6 +83,12 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
 
     private fun getDeleteUncorrelatedMessagesByIdStatement(): String{
         return "DELETE FROM $tableName WHERE id=?"
+    }
+
+    private fun getFindAllUncorrelatedMessagesQuery(): String{
+        return "SELECT id, correlationId, messageName, createdAt, payload " +
+                "FROM $tableName " +
+                "ORDER BY createdAt ASC"
     }
 
     private fun extractData(): RowMapper<CorrelationEvent>{

@@ -15,6 +15,6 @@ class WorkflowConsumer(val correlationService: CorrelationService){
     @RabbitListener(queues = ["camundaqueue"])
     fun receivedMessage(event: OrderEvent, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) routingKey: String) {
         LOGGER.info("Received the message $event due to the binding $routingKey")
-        correlationService.correlateMessage(event.OrderId, routingKey, event)
+        correlationService.correlateMessage(event.id, routingKey, event)
     }
 }
