@@ -78,6 +78,11 @@ class CorrelationService(val runtimeService: RuntimeService,
         return repository.findAllUncorrelatedMessages()
     }
 
+    fun findOldestUncorrelatedMessages(olderThanInMinutes: Int): List<CorrelationEvent>{
+        LOGGER.info("Getting oldest uncorrelated messages")
+        return repository.findOldestUncorrelatedMessages(olderThanInMinutes)
+    }
+
     private fun applyCorrelation(messageName: String?, correlationId: String?,
                                  orderId: String?, orderStatus: String?, orderItems: Array<OrderStockItem>?) : List<MessageCorrelationResult> {
         return runtimeService.createMessageCorrelation(messageName)

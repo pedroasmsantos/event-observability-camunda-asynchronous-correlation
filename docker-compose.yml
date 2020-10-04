@@ -15,5 +15,7 @@ services:
       POSTGRES_DB: camunda
       POSTGRES_USERNAME: postgres
       POSTGRES_PASSWORD: postgres
+      TZ: 'WET'
+      PGTZ: 'WET'
 volumes:
   db-data:

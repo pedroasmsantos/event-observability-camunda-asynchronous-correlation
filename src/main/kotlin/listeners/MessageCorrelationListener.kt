@@ -7,7 +7,6 @@ import org.camunda.bpm.engine.impl.event.EventType
 import org.camunda.bpm.engine.impl.persistence.entity.EventSubscriptionEntity
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.logging.Logger
 import java.util.stream.Collectors
 

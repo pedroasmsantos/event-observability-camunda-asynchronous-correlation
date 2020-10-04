@@ -49,6 +49,10 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
         return jdbcTemplate.query(getFindAllUncorrelatedMessagesQuery(), extractData())
     }
 
+    fun findOldestUncorrelatedMessages(olderThanInMinutes: Int) : List<CorrelationEvent>{
+        return jdbcTemplate.query(getFindOldestUncorrelatedMessagesQuery(olderThanInMinutes), extractData())
+    }
+
     private fun getValidateUncorrelatedMessagesQuery(): String {
         return "SELECT 1 FROM $tableName"
     }
@@ -88,6 +92,13 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
     private fun getFindAllUncorrelatedMessagesQuery(): String{
         return "SELECT id, correlationId, messageName, createdAt, payload " +
                 "FROM $tableName " +
+                "ORDER BY createdAt ASC"
+    }
+
+    private fun getFindOldestUncorrelatedMessagesQuery(olderThanInMinutes: Int): String{
+        return "SELECT id, correlationId, messageName, createdAt, payload " +
+                "FROM $tableName " +
+                "WHERE createdAt < now()-'$olderThanInMinutes minutes'::interval " +
                 "ORDER BY createdAt ASC"
     }
 
