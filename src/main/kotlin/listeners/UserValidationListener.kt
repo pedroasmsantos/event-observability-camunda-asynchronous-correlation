@@ -51,7 +51,7 @@ class UserValidationListener : TaskListener {
             message.setFrom(InternetAddress(SENDER))
             message.addRecipient(Message.RecipientType.TO, InternetAddress(recipient))
             message.subject = "Task assigned: " + delegateTask.name
-            message.setText("An order has failed. Please review the task assigned: $APP_USERTASKS_ENDPOINT?task=$taskId")
+            message.setText("You have a task pending validation. Please review the task assigned at $APP_USERTASKS_ENDPOINT?task=$taskId")
 
             Transport.send(message)
 

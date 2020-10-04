@@ -11,6 +11,7 @@ class CorrelationEvent : Serializable{
     private var messageName: String? = null
     private var payload: String? = null
     private var createdAt: Date? = null
+    private var awaitingUser: Boolean = false
 
     fun getCorrelationId(): String? {
         return correlationId
@@ -59,6 +60,15 @@ class CorrelationEvent : Serializable{
 
     fun createdNow(): CorrelationEvent {
         return setCreatedAt(Date())
+    }
+
+    fun getAwaitingUser(): Boolean {
+        return awaitingUser
+    }
+
+    fun setAwaitingUser(awaitingUser: Boolean): CorrelationEvent {
+        this.awaitingUser = awaitingUser
+        return this
     }
 
     fun asObjectValue(): ObjectValue? {

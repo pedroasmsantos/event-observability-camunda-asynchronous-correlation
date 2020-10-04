@@ -1,6 +1,5 @@
 package event.observability.camunda.listeners
 
-import event.observability.camunda.configurations.DatabaseConfig
 import event.observability.camunda.services.CorrelationService
 import org.camunda.bpm.engine.delegate.DelegateExecution
 import org.camunda.bpm.engine.delegate.JavaDelegate
@@ -20,18 +19,10 @@ class MessageDeletionListener(val correlationService: CorrelationService) : Java
 
         val consumedEvent = execution?.getVariableLocal("UncorrelatedMessagesConsumedEvent")
         if(consumedEvent != null){
+            LOGGER.info("Going to remove uncorrelated message")
             val uncorrelatedMessageId = consumedEvent as String
-            correlationService.removeUncorrelatedMessage(uncorrelatedMessageId)
-        }else{
-            val messageNames = getEventNames(execution as ExecutionEntity)
-
-            if(messageNames != null && messageNames.any()){
-                LOGGER.info("Will attempt to remove...")
-                for(name in messageNames){
-                    LOGGER.info("Going to remove message $name with correlaton id ${execution.processBusinessKey}")
-                    correlationService.removeUncorrelatedMessage(execution.getProcessBusinessKey(), name)
-                }
-            }
+            correlationService.deleteUncorrelatedMessage(uncorrelatedMessageId)
+            correlationService.applyGenericCorrelation("MessageCorrelated", uncorrelatedMessageId)
         }
     }
 

@@ -7,13 +7,13 @@ import org.springframework.stereotype.Service
 import java.util.logging.Logger
 
 @Service
-class DeleteUncorrelatedMessageExecutor(val correlationService: CorrelationService) : JavaDelegate{
-    private val LOGGER = Logger.getLogger(DeleteUncorrelatedMessageExecutor::class.java.name)
+class DisableAwaitingUserOnUncorrelatedMessageExecutor(val correlationService: CorrelationService) : JavaDelegate{
+    private val LOGGER = Logger.getLogger(DisableAwaitingUserOnUncorrelatedMessageExecutor::class.java.name)
 
     override fun execute(execution: DelegateExecution?) {
         val uncorrelatedMessageId = execution?.processBusinessKey
 
-        LOGGER.info("Attempting to delete uncorrelated message with id $uncorrelatedMessageId")
-        correlationService.deleteUncorrelatedMessage(uncorrelatedMessageId)
+        LOGGER.info("Attempting to disable awaiting for user validation flag of uncorrelated message with id $uncorrelatedMessageId")
+        correlationService.disableAwaitingUserOnUncorrelatedMessage(uncorrelatedMessageId)
     }
 }

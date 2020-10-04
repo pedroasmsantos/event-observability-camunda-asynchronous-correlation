@@ -34,11 +34,8 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
                 event.getCorrelationId(),
                 event.getMessageName(),
                 Timestamp.from(event.getCreatedAt()?.toInstant()),
-                ObjectMapper().writeValueAsString(event.getPayload()))
-    }
-
-    fun deleteUncorrelatedMessage(correlationId: String?, messageName: String?){
-        jdbcTemplate.update(getDeleteUncorrelatedMessagesByCorrelationIdAndMessageNameStatement(), correlationId, messageName)
+                ObjectMapper().writeValueAsString(event.getPayload()),
+                event.getAwaitingUser())
     }
 
     fun deleteUncorrelatedMessage(messageId: String?){
@@ -53,12 +50,16 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
         return jdbcTemplate.query(getFindOldestUncorrelatedMessagesQuery(olderThanInMinutes), extractData())
     }
 
+    fun updateAwaitingUserOnUncorrelatedMessage(awaitingUser: Boolean, messageId: String?){
+        jdbcTemplate.update(getUpdateAwaitingUserOnUncorrelatedMessageStatement(), awaitingUser, messageId)
+    }
+
     private fun getValidateUncorrelatedMessagesQuery(): String {
         return "SELECT 1 FROM $tableName"
     }
 
     private fun getFindUncorrelatedMessageQuery(): String {
-        return "SELECT id, correlationId, messageName, createdAt, payload " +
+        return "SELECT id, correlationId, messageName, createdAt, payload, awaitingUser " +
                 "FROM $tableName " +
                 "WHERE correlationId=? AND messageName=? " +
                 "ORDER BY createdAt ASC"
@@ -71,18 +72,15 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
                 "correlationId VARCHAR(255), " +
                 "messageName VARCHAR(100), " +
                 "createdAt TIMESTAMP, " +
-                "payload VARCHAR(2500) " +
+                "payload VARCHAR(2500), " +
+                "awaitingUser BOOL " +
                 ")"
     }
 
     private fun getInsertUncorrelatedMessageQuery() : String{
         return "INSERT INTO $tableName " +
-                "(id, correlationId, messageName, createdAt, payload) " +
-                "VALUES(?, ?, ?, ?, ?)"
-    }
-
-    private fun getDeleteUncorrelatedMessagesByCorrelationIdAndMessageNameStatement(): String{
-        return "DELETE FROM $tableName WHERE correlationId=? AND messageName=?"
+                "(id, correlationId, messageName, createdAt, payload, awaitingUser) " +
+                "VALUES(?, ?, ?, ?, ?, ?)"
     }
 
     private fun getDeleteUncorrelatedMessagesByIdStatement(): String{
@@ -90,16 +88,22 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
     }
 
     private fun getFindAllUncorrelatedMessagesQuery(): String{
-        return "SELECT id, correlationId, messageName, createdAt, payload " +
+        return "SELECT id, correlationId, messageName, createdAt, payload, awaitingUser " +
                 "FROM $tableName " +
                 "ORDER BY createdAt ASC"
     }
 
     private fun getFindOldestUncorrelatedMessagesQuery(olderThanInMinutes: Int): String{
-        return "SELECT id, correlationId, messageName, createdAt, payload " +
+        return "SELECT id, correlationId, messageName, createdAt, payload, awaitingUser " +
                 "FROM $tableName " +
                 "WHERE createdAt < now()-'$olderThanInMinutes minutes'::interval " +
                 "ORDER BY createdAt ASC"
+    }
+
+    private fun getUpdateAwaitingUserOnUncorrelatedMessageStatement(): String{
+        return "UPDATE $tableName " +
+               "SET awaitingUser = ? " +
+               "WHERE id=?"
     }
 
     private fun extractData(): RowMapper<CorrelationEvent>{
@@ -110,6 +114,7 @@ class UncorrelatedMessagesRepository(val jdbcTemplate: JdbcTemplate) {
                         .setMessageName(resultSet.getString("messageName"))
                         .setCreatedAt(resultSet.getTimestamp("createdAt"))
                         .setPayload(resultSet.getString("payload"))
+                        .setAwaitingUser(resultSet.getBoolean("awaitingUser"))
 
         }
     }

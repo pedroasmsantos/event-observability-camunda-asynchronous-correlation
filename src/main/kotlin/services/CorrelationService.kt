@@ -27,11 +27,11 @@ class CorrelationService(val runtimeService: RuntimeService,
             LOGGER.info("Scheduling message correlation....")
             scheduler.schedule(
                 {
-                    if(uncorrelatedMessage != null){
-                        LOGGER.info("Uncorrelated Message found... Will attempt to apply correlation...")
-                        applyCorrelation(uncorrelatedMessage.getMessageName(), uncorrelatedMessage.getCorrelationId(),
-                                uncorrelatedMessage.getCorrelationId(), uncorrelatedMessage.getPayload(), arrayOf<OrderStockItem>())
-                    }
+                    LOGGER.info("Uncorrelated Message found... Will attempt to apply correlation...")
+                    applyOrderCorrelation(uncorrelatedMessage.getMessageName(), uncorrelatedMessage.getCorrelationId(),
+                            uncorrelatedMessage.getCorrelationId(), uncorrelatedMessage.getPayload(), arrayOf<OrderStockItem>())
+
+
                 },
                 Instant.now().plusSeconds(2))
 
@@ -46,7 +46,7 @@ class CorrelationService(val runtimeService: RuntimeService,
                          event: OrderEvent) {
         LOGGER.info("CorrelationService#consumeMessage: Attempt to correlate message correlationId $correlationId - messageName $messageName. ")
 
-        val result = applyCorrelation(messageName, correlationId, event.id, event.status, event.products)
+        val result = applyOrderCorrelation(messageName, correlationId, event.id, event.status, event.products)
 
         if (result != null && result.any()){
             LOGGER.info("Event $event correlated successfully.")
@@ -63,12 +63,7 @@ class CorrelationService(val runtimeService: RuntimeService,
         }
     }
 
-    fun removeUncorrelatedMessage(correlationId: String?, messageName: String?) {
-        LOGGER.info("Attempting to remove uncorrelated message record because message was already correlated")
-        repository.deleteUncorrelatedMessage(correlationId, messageName)
-    }
-
-    fun removeUncorrelatedMessage(messageId: String?) {
+    fun deleteUncorrelatedMessage(messageId: String?) {
         LOGGER.info("Attempting to remove uncorrelated message record because message was already correlated")
         repository.deleteUncorrelatedMessage(messageId)
     }
@@ -83,7 +78,23 @@ class CorrelationService(val runtimeService: RuntimeService,
         return repository.findOldestUncorrelatedMessages(olderThanInMinutes)
     }
 
-    private fun applyCorrelation(messageName: String?, correlationId: String?,
+    fun disableAwaitingUserOnUncorrelatedMessage(messageId: String?){
+        repository.updateAwaitingUserOnUncorrelatedMessage(false, messageId)
+    }
+
+    fun enableAwaitingUserOnUncorrelatedMessage(messageId: String){
+        repository.updateAwaitingUserOnUncorrelatedMessage(true, messageId)
+    }
+
+    fun applyGenericCorrelation(messageName: String?, correlationId: String?,
+                                payload: String? = "No payload provided") : List<MessageCorrelationResult> {
+        return runtimeService.createMessageCorrelation(messageName)
+                .processInstanceBusinessKey(correlationId)
+                .setVariable("payload", payload)
+                .correlateAllWithResult()
+    }
+
+    private fun applyOrderCorrelation(messageName: String?, correlationId: String?,
                                  orderId: String?, orderStatus: String?, orderItems: Array<OrderStockItem>?) : List<MessageCorrelationResult> {
         return runtimeService.createMessageCorrelation(messageName)
                 .processInstanceBusinessKey(correlationId)
